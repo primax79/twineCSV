@@ -1,12 +1,17 @@
 require "twineCSV/version"
 require 'rubygems'
 require 'rubyXL'
+require 'rubyXL/convenience_methods/cell'
+require 'rubyXL/convenience_methods/color'
+require 'rubyXL/convenience_methods/font'
+require 'rubyXL/convenience_methods/workbook'
+require 'rubyXL/convenience_methods/worksheet'
 
 module TwineCSV
 
   def self.to_csv input, output
     abort("The input file must not be nil") if input.nil? or output.nil?
-    content = File.open(input, 'r').read
+    content = File.open(input, "r:UTF-8").read
     lines = content.each_line.to_a.map {|line|
       result = line.gsub("\n", '').strip
       result[-1] == ";" ? result[0..-2] : result
@@ -31,7 +36,7 @@ module TwineCSV
       end
     }
 
-    File.open(output, 'wb+') {|f|
+    File.open(output, 'wb+:UTF-8') {|f|
 
       f << 'section;key;' << langs.uniq.join(';') << "\n"
 
@@ -52,7 +57,7 @@ module TwineCSV
     if extension == 'csv'
       check_for_separator(input)
 
-      content = File.open(input, 'r').read
+      content = File.open(input, "r:UTF-8").read
       lines = content.each_line.to_a.map {|line| line.gsub("\n", '').strip}
       current_section = ''
       result = []
@@ -71,7 +76,7 @@ module TwineCSV
         end
       }
 
-      File.open(output, 'wb+') {|f|
+      File.open(output, 'wb+:UTF-8') {|f|
         f << result.join("\n")
       }
     elsif extension == 'xlsx'
@@ -87,7 +92,7 @@ module TwineCSV
           if cell_index > 1
             if row_index == 0
               langs << cell&.value
-            else
+            elsif cell&.value
               result << "    #{langs[cell_index-2]} = #{cell&.value.strip}#{"\n" if cell_index - 2 >= langs.length-1}"
             end
           elsif cell_index == 1
@@ -100,7 +105,7 @@ module TwineCSV
           end
         }
 
-        File.open(output, 'wb+') {|f|
+        File.open(output, 'wb+:UTF-8') {|f|
           f << result.join("\n")
         }
       }
@@ -111,7 +116,7 @@ module TwineCSV
 
   def self.to_xlsx input, output
     abort("The input file must not be nil") if input.nil? or output.nil?
-    content = File.open(input, 'r').read
+    content = File.open(input, "r:UTF-8").read
 
     lines = content.each_line.to_a.map {|line|
       result = line.gsub("\n", '').strip
@@ -144,8 +149,8 @@ module TwineCSV
     worksheet.add_cell 0, 0, 'Section'
     worksheet.add_cell 0, 1, 'Key'
 
-    worksheet.change_column_width 0, 0
-    worksheet.change_column_width 1, 0
+    worksheet.change_column_width 0, 15
+    worksheet.change_column_width 1, 15
 
     langs.uniq.each_with_index.map {|item, index|
       worksheet.add_cell 0, index + 2, item
@@ -179,7 +184,7 @@ module TwineCSV
   def self.check_for_separator(input)
     allowed_separators = [';']
 
-    content = File.open(input, 'r').read
+    content = File.open(input, "r:UTF-8").read
     lines = content.each_line.to_a.map {|line| line.gsub("\n", '').strip}
     header_line = lines[0]
 
